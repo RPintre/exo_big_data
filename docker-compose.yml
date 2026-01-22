@@ -18,9 +18,6 @@ services:
       - ./notebooks:/home/jovyan/work
     environment:
       - PYSPARK_SUBMIT_ARGS=--packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1 pyspark
-      - PYSPARK_PYTHON=python3
-      - PYSPARK_DRIVER_PYTHON=jupyter
-      - PYSPARK_DRIVER_PYTHON_OPTS="notebook --ip=0.0.0.0 --no-browser --allow-root"
     depends_on:
       - kafka
   spark:
@@ -55,4 +52,5 @@ services:
 volumes:
   kafkaData:
   kafkaSecrets:
+
   kafkaConfig:
