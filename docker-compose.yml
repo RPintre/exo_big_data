@@ -7,6 +7,7 @@ services:
     volumes:
       - kafkaSecrets:/etc/kafka/secrets
       - kafkaData:/var/lib/kafka/data
+      - kafkaConfig:/mnt/shared/config
     env_file: kafka.env  
 
   jupyter:
@@ -17,10 +18,54 @@ services:
       - ./notebooks:/home/jovyan/work
     environment:
       - PYSPARK_SUBMIT_ARGS=--packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1 pyspark
+      - PYSPARK_PYTHON=python3
+      - PYSPARK_DRIVER_PYTHON=jupyter
+      - PYSPARK_DRIVER_PYTHON_OPTS="notebook --ip=0.0.0.0 --no-browser --allow-root"
     depends_on:
       - kafka
-  
+  spark:
+    image: spark
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.master.Master"]
+    volumes:
+      - ./jobs:/opt/spark-jobs
+    env_file:
+      - spark-master.env
+    ports:
+      - "7077:7077"
+      - "8080:8080"
+
+  spark-worker:
+    image: spark
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark:7077"]
+    depends_on:
+      - spark
+    env_file:
+      - spark-worker.env
+
+
+  namenode:
+      image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+      env_file:
+        - ./namenode/namenode.env
+      ports:
+        - "9870:9870"
+        - "8020:8020"
+      volumes:
+        - namenode:/hadoop/dfs/name
+        - ./rapports:/user/spark
+
+  datanode:
+      image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+      depends_on:
+        - namenode
+      env_file: ./datanode.env
+      volumes:
+        - datanode:/hadoop/dfs/data
+
 
 volumes:
+  namenode:
+  datanode:
   kafkaData:
   kafkaSecrets:
+  kafkaConfig:
