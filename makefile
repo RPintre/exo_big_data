@@ -4,7 +4,8 @@ PROJECT_NAME = Big_Data
 all:
 	$(COMPOSE) up -d --build
 kafka:
-	$(COMPOSE) down -v --rmi kafka
+	$(COMPOSE) down -v kafka
+	docker image rm apache/kafka:latest
 	$(COMPOSE) up -d --build kafka
 
 jupyter:
