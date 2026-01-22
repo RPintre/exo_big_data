@@ -1,15 +1,4 @@
 services:
-  # zookeeper:
-  #   image: zookeeper
-  #   volumes:
-  #     - zookeeperData:/data
-  #     - zookeeperLog:/datalog
-  #     - zookeeperDataLog:/datalog
-  #   environment:
-  #     - ALLOW_ANONYMOUS_LOGIN=yes
-  #   ports:
-  #     - "2181:2181"
-
   kafka:
     image: apache/kafka
     ports:
@@ -18,6 +7,7 @@ services:
     volumes:
       - kafkaSecrets:/etc/kafka/secrets
       - kafkaData:/var/lib/kafka/data
+      - kafkaConfig:/mnt/shared/config
     env_file: kafka.env  
 
   jupyter:
@@ -28,13 +18,41 @@ services:
       - ./notebooks:/home/jovyan/work
     environment:
       - PYSPARK_SUBMIT_ARGS=--packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1 pyspark
+      - PYSPARK_PYTHON=python3
+      - PYSPARK_DRIVER_PYTHON=jupyter
+      - PYSPARK_DRIVER_PYTHON_OPTS="notebook --ip=0.0.0.0 --no-browser --allow-root"
     depends_on:
       - kafka
-  
+  spark:
+    image: spark
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.master.Master"]
+    volumes:
+      - ./jobs:/opt/spark-jobs
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    ports:
+      - "7077:7077"
+      - "8080:8080"
+
+  spark-worker:
+    image: spark
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark:7077"]
+    depends_on:
+      - spark
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark:7077
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no  
 
 volumes:
-  # zookeeperData:
-  # zookeeperLog:
-  # zookeeperDataLog:
   kafkaData:
   kafkaSecrets:
+  kafkaConfig:
