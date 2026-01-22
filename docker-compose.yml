@@ -1,0 +1,41 @@
+services:
+  zookeeper:
+    image: zookeeper
+    volumes:
+      - zookeeperData:/data
+      - zookeeperLog:/datalog
+      - zookeeperDataLog:/datalog
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: apache/kafka
+    depends_on:
+    - zookeeper
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafkaSecrets:/etc/kafka/secrets
+      - kafkaData:/var/lib/kafka/data
+    env_file: kafka.env  
+
+  jupyter:
+    image: jupyter/pyspark-notebook:spark-3.4.1
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/home/jovyan/work
+    environment:
+      - JUPYTER_PASSWORD=bigdata
+      - PYSPARK_SUBMIT_ARGS=--packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1 pyspark
+
+  
+
+volumes:
+  zookeeperData:
+  zookeeperLog:
+  zookeeperDataLog:
+  kafkaData:
+  kafkaSecrets:
