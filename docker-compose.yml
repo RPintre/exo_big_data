@@ -1,15 +1,4 @@
 services:
-  # zookeeper:
-  #   image: zookeeper
-  #   volumes:
-  #     - zookeeperData:/data
-  #     - zookeeperLog:/datalog
-  #     - zookeeperDataLog:/datalog
-  #   environment:
-  #     - ALLOW_ANONYMOUS_LOGIN=yes
-  #   ports:
-  #     - "2181:2181"
-
   kafka:
     image: apache/kafka
     ports:
@@ -33,8 +22,5 @@ services:
   
 
 volumes:
-  # zookeeperData:
-  # zookeeperLog:
-  # zookeeperDataLog:
   kafkaData:
   kafkaSecrets:
